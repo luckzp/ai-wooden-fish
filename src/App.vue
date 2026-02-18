@@ -4,6 +4,7 @@ import WoodenFish from './components/WoodenFish.vue'
 import QuoteBubble from './components/QuoteBubble.vue'
 import MeritBubble from './components/MeritBubble.vue'
 import { pickRandomQuote } from './data/quotes.js'
+import { getOpenReplyStream } from './api/open.js'
 import bgmUrl from './assets/bgm.mp3'
 
 const currentQuote = ref('')
@@ -13,6 +14,15 @@ const maxMeritBubbles = 5
 let nextMeritId = 0
 let bgm = null
 let bgmPending = true
+
+// 求大师开示
+const showOpenModal = ref(false)
+const openQuestion = ref('')
+const openReply = ref('')
+const openLoading = ref(false)
+const openError = ref('')
+const openModalRef = ref(null)
+const openEntryRef = ref(null)
 
 onMounted(() => {
   bgm = new Audio(bgmUrl)
@@ -62,6 +72,39 @@ function onTap() {
 function removeMeritBubble(id) {
   meritBubbles.value = meritBubbles.value.filter((b) => b.id !== id)
 }
+
+function openOpenModal() {
+  showOpenModal.value = true
+  openQuestion.value = ''
+  openReply.value = ''
+  openError.value = ''
+}
+
+function closeOpenModal() {
+  showOpenModal.value = false
+  openQuestion.value = ''
+  openReply.value = ''
+  openError.value = ''
+}
+
+function onOpenModalBackdrop(e) {
+  if (e.target === openModalRef.value) closeOpenModal()
+}
+
+async function submitOpen() {
+  openError.value = ''
+  openReply.value = ''
+  openLoading.value = true
+  try {
+    await getOpenReplyStream(openQuestion.value, (chunk) => {
+      openReply.value += chunk
+    })
+  } catch (err) {
+    openError.value = err?.message || '开示请求失败，请稍后再试'
+  } finally {
+    openLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -82,8 +125,60 @@ function removeMeritBubble(id) {
       <main class="main">
         <QuoteBubble :quote="currentQuote" />
         <WoodenFish @tap="onTap" />
+        <button
+          type="button"
+          ref="openEntryRef"
+          class="open-entry"
+          :aria-expanded="showOpenModal"
+          aria-haspopup="dialog"
+          aria-label="求大师开示"
+          @click="openOpenModal"
+        >
+          求大师开示
+        </button>
       </main>
     </div>
+
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div
+          v-if="showOpenModal"
+          ref="openModalRef"
+          class="open-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="open-modal-title"
+          @click="onOpenModalBackdrop"
+        >
+          <div class="open-modal-card" @click.stop>
+            <h2 id="open-modal-title" class="open-modal-title">求大师开示</h2>
+            <textarea
+              v-model="openQuestion"
+              class="open-modal-input"
+              placeholder="有何困惑，但说无妨"
+              rows="3"
+              :disabled="openLoading"
+            />
+            <button
+              type="button"
+              class="open-modal-submit"
+              :disabled="openLoading"
+              @click="submitOpen"
+            >
+              {{ openLoading ? '开示中…' : '求开示' }}
+            </button>
+            <div v-if="openError" class="open-modal-error">{{ openError }}</div>
+            <div v-if="openReply && !openError" class="open-modal-reply">
+              <p class="open-modal-reply-label">大师开示</p>
+              <p class="open-modal-reply-text">{{ openReply }}</p>
+            </div>
+            <button type="button" class="open-modal-close" @click="closeOpenModal">
+              关闭
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <footer class="footer">
       <p>应无所住而生其心</p>
@@ -161,6 +256,35 @@ function removeMeritBubble(id) {
   order: 2;
 }
 
+.open-entry {
+  order: 3;
+  margin-top: 1.25rem;
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: color 0.2s;
+}
+
+.open-entry:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.open-entry:focus {
+  outline: none;
+}
+
+.open-entry:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
 .footer {
   margin-top: auto;
   padding-top: 1.75rem;
@@ -222,6 +346,259 @@ function removeMeritBubble(id) {
   }
 
   .bgm-toggle:focus-visible {
+    outline-color: rgba(0, 0, 0, 0.35);
+  }
+
+  .open-entry {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .open-entry:hover {
+    color: #1a1a1a;
+  }
+
+  .open-entry:focus-visible {
+    outline-color: rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* 求大师开示弹层（不受 scoped 限制的 Teleport 目标需用 :deep 或全局；此处弹层在 body 下，用全局类） */
+.open-modal-backdrop {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.open-modal-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 1.5rem 1.35rem;
+  background: rgba(28, 28, 28, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.open-modal-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.open-modal-input {
+  width: 100%;
+  margin-bottom: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.open-modal-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.open-modal-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.open-modal-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.open-modal-submit {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.open-modal-submit:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.open-modal-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.open-modal-submit:focus {
+  outline: none;
+}
+
+.open-modal-submit:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.open-modal-error {
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  color: rgba(255, 120, 80, 0.95);
+}
+
+.open-modal-reply {
+  margin-bottom: 1rem;
+  padding: 1rem 1rem;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.open-modal-reply-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+
+.open-modal-reply-text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.open-modal-close {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.open-modal-close:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.open-modal-close:focus {
+  outline: none;
+}
+
+.open-modal-close:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-active .open-modal-card,
+.modal-fade-leave-active .open-modal-card {
+  transition: transform 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .open-modal-card,
+.modal-fade-leave-to .open-modal-card {
+  transform: scale(0.96);
+}
+
+@media (prefers-color-scheme: light) {
+  .open-modal-card {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+
+  .open-modal-title {
+    color: #1a1a1a;
+  }
+
+  .open-modal-input {
+    color: #1a1a1a;
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  .open-modal-input::placeholder {
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  .open-modal-input:focus {
+    border-color: rgba(0, 0, 0, 0.25);
+  }
+
+  .open-modal-submit {
+    color: #1a1a1a;
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  .open-modal-submit:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .open-modal-submit:focus-visible {
+    outline-color: rgba(0, 0, 0, 0.35);
+  }
+
+  .open-modal-error {
+    color: #c0392b;
+  }
+
+  .open-modal-reply {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .open-modal-reply-label {
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  .open-modal-reply-text {
+    color: #1a1a1a;
+  }
+
+  .open-modal-close {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .open-modal-close:hover {
+    color: #1a1a1a;
+  }
+
+  .open-modal-close:focus-visible {
     outline-color: rgba(0, 0, 0, 0.35);
   }
 }
