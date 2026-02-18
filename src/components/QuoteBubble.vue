@@ -1,7 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+
 defineProps({
   quote: { type: String, default: '' },
 })
+
+const { t } = useI18n({ useScope: 'global' })
 </script>
 
 <template>
@@ -10,7 +14,7 @@ defineProps({
       <div v-if="quote" key="has-quote" class="bubble-content">
         <p class="quote-text">{{ quote }}</p>
       </div>
-      <p v-else key="no-quote" class="quote-placeholder">敲一下木鱼，大师给你开示</p>
+      <p v-else key="no-quote" class="quote-placeholder">{{ t('quote.placeholder') }}</p>
     </Transition>
   </div>
 </template>

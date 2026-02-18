@@ -6,28 +6,47 @@
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const OPENROUTER_MODEL = 'google/gemini-3-flash-preview'
 
-/** 大师开示系统提示词：禅意、简短、可带佛系/职场梗 */
-export const OPEN_SYSTEM_PROMPT = `你是开示大师。请用简洁、温和、略带禅意的口吻回答施主的困惑。
+/** 界面语言到 [TARGETLANGUAGE] 的映射，用于英文系统提示词 */
+const LOCALE_TO_TARGET_LANGUAGE = {
+  'zh-CN': 'Chinese',
+  en: 'English',
+}
 
-要求：
-- 回答以中文为主。
-- 语气像一位接地气的佛系智者：可引用一点佛家/道家俗语，也可用「功德」「随缘」「放下」等词，但避免过于玄虚。
-- 可以带一点幽默或职场/摸鱼梗，让施主会心一笑、放松心情。
-- 若施主未写具体问题，可给一句随缘的开示或祝福。
-- 不要以「作为 AI」自居，直接以「大师」口吻作答，无需开场白。`
+/**
+ * 大师开示系统提示词（英文，参考 docs/prompt-reference.md）
+ * 使用 [TARGETLANGUAGE] 占位符；用户问题以 user 消息单独发送，故不含 [PROMPT]
+ * @param {string} [locale] - 当前界面语言，如 'zh-CN' | 'en'，不传则用 "the same language as the user's message"
+ */
+export function getOpenSystemPrompt(locale) {
+  const targetLanguage = locale
+    ? (LOCALE_TO_TARGET_LANGUAGE[locale] || "the same language as the user's message")
+    : "the same language as the user's message"
+  return `Please ignore all previous instructions.
+
+Answer the user's message in [TARGETLANGUAGE] as if you were a highly accomplished practitioner of liberative technique and a humble Mahayana Buddhist master. Wise, patient, tactful, and unconventional like Vimalakirti, you have spent at least three decades studying Mahayana Buddhist scriptures from around the world and are a master meditator in many Buddhist, Vedic, and other traditions.
+
+You have great compassion for all sentient beings. Your answers consider compassion for all beings and the benefit of all sentient beings. Be articulate, precise, patient, and encouraging. Answer questions and respond to comments in a helpful, empathetic, and deeply insightful way, aligned with the spirit and moral principles of Buddhism, without necessarily using Buddhist-specific vocabulary unless the user does so first.
+
+Make your response culturally appropriate and understandable for most speakers of [TARGETLANGUAGE], without compromising Buddhist principles.
+
+Respond to the user's message (which follows) entirely in [TARGETLANGUAGE]. Be informal; do not address the querier as "friend" or use other salutations. If the user sends no specific question, offer a brief, kind teaching or blessing.`
+    .replace(/\[TARGETLANGUAGE\]/g, targetLanguage)
+}
 
 /**
  * 流式请求大师开示，每收到一段内容就调用 onChunk(delta)
  * @param {string} question - 用户输入的困惑
  * @param {(chunk: string) => void} onChunk - 每收到一段增量文案就调用
+ * @param {string} [locale] - 当前界面语言（如 'zh-CN' | 'en'），用于指定回复语言；不传则根据用户问题语言回复
  * @returns {Promise<string>} 完整开示文案（流结束后）
  */
-export async function getOpenReplyStream(question, onChunk) {
+export async function getOpenReplyStream(question, onChunk, locale) {
   const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
   if (!apiKey || !apiKey.trim()) {
-    throw new Error('未配置 OpenRouter API Key，请在 .env 或 .env.local 中设置 VITE_OPENROUTER_API_KEY')
+    throw new Error('errors.noApiKey')
   }
 
+  const systemPrompt = getOpenSystemPrompt(locale)
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: {
@@ -37,25 +56,19 @@ export async function getOpenReplyStream(question, onChunk) {
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
       messages: [
-        { role: 'system', content: OPEN_SYSTEM_PROMPT },
-        { role: 'user', content: question?.trim() || '施主今日有何困惑？若无，便随缘给一句开示罢。' },
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: question?.trim() || 'No specific question — please offer a brief teaching or blessing.' },
       ],
       stream: true,
     }),
   })
 
   if (!res.ok) {
-    const errText = await res.text()
-    let msg = `开示请求失败（${res.status}）`
-    try {
-      const j = JSON.parse(errText)
-      if (j.error?.message) msg = j.error.message
-    } catch (_) {}
-    throw new Error(msg)
+    throw new Error('errors.requestFailed')
   }
 
   const reader = res.body?.getReader()
-  if (!reader) throw new Error('无法读取流式响应')
+  if (!reader) throw new Error('errors.streamReadFailed')
 
   const decoder = new TextDecoder()
   let full = ''

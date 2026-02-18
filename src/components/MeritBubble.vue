@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n({ useScope: 'global' })
 const props = defineProps({
   id: { type: [Number, String], required: true },
   left: { type: Number, required: true },
@@ -44,7 +46,7 @@ const bubbleStyle = {
     aria-live="polite"
     @animationend="onRiseEnd"
   >
-    功德+1
+    {{ t('merit.text') }}
   </div>
 </template>
 
