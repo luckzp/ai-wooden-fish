@@ -11,7 +11,7 @@
 | **敲木鱼** | 点击木鱼，播放敲击音效，随机展示短句池中的开示文案（可复制） |
 | **功德气泡** | 每次敲击飘出「功德+1」等气泡动画，营造氛围 |
 | **背景音乐** | 页面内建 BGM，可一键开关 |
-| **求大师开示** | 输入困惑，通过 OpenRouter 调用 **Gemini 3.0 Flash** 流式生成「大师」口吻的开示（需配置 API Key） |
+| **求大师开示** | 输入困惑，通过 **DeepSeek API** 流式生成「大师」口吻的开示（需配置 API Key） |
 
 ---
 
@@ -19,7 +19,7 @@
 
 - **框架**：Vue 3（Composition API + `<script setup>`）
 - **构建**：Vite 7
-- **AI**：OpenRouter — `google/gemini-3-flash-preview`，流式 SSE
+- **AI**：DeepSeek API — `deepseek-chat`，流式 SSE
 
 ---
 
@@ -41,13 +41,13 @@ npm run dev
 
 ### 3. 「求大师开示」所需配置（可选）
 
-该功能依赖 **OpenRouter API Key**。未配置时点击「求大师开示」会提示错误。
+该功能依赖 **DeepSeek API Key**。未配置时点击「求大师开示」会提示错误。
 
 - 在项目根目录创建 `.env` 或 `.env.local`
-- 添加变量（在 [OpenRouter](https://openrouter.ai/keys) 创建 Key）：
+- 添加变量（在 [DeepSeek 开放平台](https://platform.deepseek.com/) 创建 Key）：
 
 ```env
-VITE_OPENROUTER_API_KEY=你的OpenRouter_API_Key
+VITE_DEEPSEEK_API_KEY=你的DeepSeek_API_Key
 ```
 
 不配置也可正常敲木鱼、看短句、听 BGM。
@@ -88,7 +88,7 @@ ai-wooden-fish/
 │   ├── data/
 │   │   └── quotes.js        # 敲木鱼短句池
 │   ├── api/
-│   │   └── open.js          # 求大师开示：OpenRouter 流式请求与系统提示词
+│   │   └── open.js          # 求大师开示：DeepSeek API 流式请求与系统提示词
 │   └── assets/
 │       ├── WoodenFish.svg   # 木鱼图标
 │       └── bgm.mp3          # 背景音乐
@@ -112,4 +112,4 @@ ai-wooden-fish/
 ## 许可与说明
 
 - 短句池与 UI 仅供娱乐、放松使用。
-- 使用 OpenRouter 时请遵守其服务条款与用量计费规则。
+- 使用 DeepSeek API 时请遵守其服务条款与用量计费规则。

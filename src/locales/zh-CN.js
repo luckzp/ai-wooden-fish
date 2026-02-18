@@ -80,7 +80,7 @@ export default {
       slogan: '应无所住而生其心',
     },
     errors: {
-      noApiKey: '未配置 OpenRouter API Key，请在 .env 或 .env.local 中设置 VITE_OPENROUTER_API_KEY',
+      noApiKey: '未配置 DeepSeek API Key，请在 .env 或 .env.local 中设置 VITE_DEEPSEEK_API_KEY',
       requestFailed: '开示请求失败，请稍后再试',
       streamReadFailed: '无法读取流式响应',
     },

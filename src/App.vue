@@ -42,10 +42,19 @@ const openReplyHtml = computed(() => {
   }
 })
 
+// GA4 自定义事件（gtag 在 index.html 中加载，无则跳过）
+function trackEvent(name, params = {}) {
+  try {
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('event', name, params)
+    }
+  } catch (_) { }
+}
+
 onMounted(() => {
   bgm = new Audio(bgmUrl)
   bgm.loop = true
-  bgm.volume = 0.5
+  bgm.volume = 0.3
   bgm.play().then(() => {
     bgmPlaying.value = true
     bgmPending = false
@@ -69,6 +78,7 @@ function toggleBgm() {
 }
 
 function onTap() {
+  trackEvent('wooden_fish_tap')
   if (bgmPending && bgm && !bgmPlaying.value) {
     bgm.play().then(() => {
       bgmPlaying.value = true
@@ -92,6 +102,7 @@ function removeMeritBubble(id) {
 }
 
 function openOpenModal() {
+  trackEvent('open_modal_open')
   showOpenModal.value = true
   openQuestion.value = ''
   openReply.value = ''
@@ -113,20 +124,23 @@ function setLocale(newLocale) {
   locale.value = newLocale
   try {
     localStorage.setItem('app-locale', newLocale)
-  } catch (_) {}
+  } catch (_) { }
 }
 
 async function submitOpen() {
   openError.value = ''
   openReply.value = ''
   openLoading.value = true
+  trackEvent('open_submit', { question_length: openQuestion.value?.length ?? 0 })
   try {
     await getOpenReplyStream(openQuestion.value, (chunk) => {
       openReply.value += chunk
     }, locale.value)
+    trackEvent('open_success')
   } catch (err) {
     const msg = err?.message || ''
     openError.value = msg.startsWith('errors.') ? t(msg) : (msg || t('errors.requestFailed'))
+    trackEvent('open_error', { error: msg || 'unknown' })
   } finally {
     openLoading.value = false
   }
@@ -140,10 +154,13 @@ async function submitOpen() {
         @done="removeMeritBubble" />
     </div>
     <div class="top-actions">
-      <button type="button" class="lang-switcher" :aria-label="locale === 'zh-CN' ? t('lang.switchToEn') : t('lang.switchToZh')" @click="setLocale(locale === 'zh-CN' ? 'en' : 'zh-CN')">
+      <button type="button" class="lang-switcher"
+        :aria-label="locale === 'zh-CN' ? t('lang.switchToEn') : t('lang.switchToZh')"
+        @click="setLocale(locale === 'zh-CN' ? 'en' : 'zh-CN')">
         {{ t('lang.otherLangName') }}
       </button>
-      <button type="button" class="bgm-toggle" :aria-label="bgmPlaying ? t('common.bgmAriaOff') : t('common.bgmAriaOn')" @click="toggleBgm">
+      <button type="button" class="bgm-toggle" :aria-label="bgmPlaying ? t('common.bgmAriaOff') : t('common.bgmAriaOn')"
+        @click="toggleBgm">
         {{ bgmPlaying ? t('common.bgmOff') : t('common.bgmOn') }}
       </button>
     </div>
@@ -156,15 +173,8 @@ async function submitOpen() {
       <main class="main">
         <QuoteBubble :quote="currentQuote" />
         <WoodenFish @tap="onTap" />
-        <button
-          type="button"
-          ref="openEntryRef"
-          class="open-entry"
-          :aria-expanded="showOpenModal"
-          aria-haspopup="dialog"
-          :aria-label="t('open.entry')"
-          @click="openOpenModal"
-        >
+        <button type="button" ref="openEntryRef" class="open-entry" :aria-expanded="showOpenModal"
+          aria-haspopup="dialog" :aria-label="t('open.entry')" @click="openOpenModal">
           {{ t('open.entry') }}
         </button>
       </main>
@@ -172,30 +182,13 @@ async function submitOpen() {
 
     <Teleport to="body">
       <Transition name="modal-fade">
-        <div
-          v-if="showOpenModal"
-          ref="openModalRef"
-          class="open-modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="open-modal-title"
-          @click="onOpenModalBackdrop"
-        >
+        <div v-if="showOpenModal" ref="openModalRef" class="open-modal-backdrop" role="dialog" aria-modal="true"
+          aria-labelledby="open-modal-title" @click="onOpenModalBackdrop">
           <div class="open-modal-card" @click.stop>
             <h2 id="open-modal-title" class="open-modal-title">{{ t('open.modalTitle') }}</h2>
-            <textarea
-              v-model="openQuestion"
-              class="open-modal-input"
-              :placeholder="t('open.placeholder')"
-              rows="3"
-              :disabled="openLoading"
-            />
-            <button
-              type="button"
-              class="open-modal-submit"
-              :disabled="openLoading"
-              @click="submitOpen"
-            >
+            <textarea v-model="openQuestion" class="open-modal-input" :placeholder="t('open.placeholder')" rows="3"
+              :disabled="openLoading" />
+            <button type="button" class="open-modal-submit" :disabled="openLoading" @click="submitOpen">
               {{ openLoading ? t('open.submitting') : t('open.submit') }}
             </button>
             <div v-if="openError" class="open-modal-error">{{ openError }}</div>
@@ -341,6 +334,25 @@ async function submitOpen() {
   gap: 0.5rem;
 }
 
+@media (max-width: 600px) {
+  .top-actions {
+    position: static;
+    margin-bottom: 0.75rem;
+    justify-content: center;
+  }
+
+  .header {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    word-break: keep-all;
+  }
+}
+
 .lang-switcher,
 .bgm-toggle {
   box-sizing: border-box;
@@ -385,6 +397,7 @@ async function submitOpen() {
 }
 
 @media (prefers-color-scheme: light) {
+
   .lang-switcher,
   .bgm-toggle {
     color: #1a1a1a;
@@ -563,12 +576,15 @@ async function submitOpen() {
 .open-modal-reply-text.markdown-body :deep(p) {
   margin: 0 0 0.75em;
 }
+
 .open-modal-reply-text.markdown-body :deep(p:last-child) {
   margin-bottom: 0;
 }
+
 .open-modal-reply-text.markdown-body :deep(strong) {
   font-weight: 600;
 }
+
 .open-modal-reply-text.markdown-body :deep(h1),
 .open-modal-reply-text.markdown-body :deep(h2),
 .open-modal-reply-text.markdown-body :deep(h3) {
@@ -576,26 +592,31 @@ async function submitOpen() {
   font-weight: 600;
   line-height: 1.3;
 }
+
 .open-modal-reply-text.markdown-body :deep(ul),
 .open-modal-reply-text.markdown-body :deep(ol) {
   margin: 0.5em 0;
   padding-left: 1.5em;
 }
+
 .open-modal-reply-text.markdown-body :deep(li) {
   margin: 0.25em 0;
 }
+
 .open-modal-reply-text.markdown-body :deep(blockquote) {
   margin: 0.75em 0;
   padding-left: 1em;
   border-left: 3px solid rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.85);
 }
+
 .open-modal-reply-text.markdown-body :deep(code) {
   padding: 0.15em 0.4em;
   font-size: 0.9em;
   background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }
+
 .open-modal-reply-text.markdown-body :deep(pre) {
   margin: 0.75em 0;
   padding: 1rem;
@@ -603,6 +624,7 @@ async function submitOpen() {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 8px;
 }
+
 .open-modal-reply-text.markdown-body :deep(pre code) {
   padding: 0;
   background: none;

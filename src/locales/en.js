@@ -80,7 +80,7 @@ export default {
       slogan: 'Abide nowhere, yet let the mind arise.',
     },
     errors: {
-      noApiKey: 'OpenRouter API Key not set. Add VITE_OPENROUTER_API_KEY to .env or .env.local',
+      noApiKey: 'DeepSeek API Key not set. Add VITE_DEEPSEEK_API_KEY to .env or .env.local',
       requestFailed: 'Request failed. Please try again later.',
       streamReadFailed: 'Could not read stream response.',
     },

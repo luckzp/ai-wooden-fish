@@ -23,7 +23,7 @@ function onTap() {
   isTapping.value = true
   if (tapSound) {
     tapSound.currentTime = 0
-    tapSound.play().catch(() => {})
+    tapSound.play().catch(() => { })
   }
   emit('tap')
   setTimeout(() => {
@@ -33,19 +33,8 @@ function onTap() {
 </script>
 
 <template>
-  <button
-    type="button"
-    class="wooden-fish"
-    :class="{ tap: isTapping }"
-    aria-label="敲木鱼"
-    @click="onTap"
-  >
-    <img
-      :src="fishSvg"
-      class="fish-svg"
-      alt=""
-      aria-hidden="true"
-    />
+  <button type="button" class="wooden-fish" :class="{ tap: isTapping }" aria-label="敲木鱼" @click="onTap">
+    <img :src="fishSvg" class="fish-svg" alt="" aria-hidden="true" />
   </button>
 </template>
 

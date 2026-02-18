@@ -1,10 +1,10 @@
 /**
- * 求大师开示：OpenRouter Gemini 3.0 Pro 流式接口
- * 需要环境变量 VITE_OPENROUTER_API_KEY（在 .env 或 .env.local 中配置）
+ * 求大师开示：DeepSeek API 流式接口
+ * 需要环境变量 VITE_DEEPSEEK_API_KEY（在 .env 或 .env.local 中配置）
  */
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-const OPENROUTER_MODEL = 'google/gemini-3-flash-preview'
+const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
+const DEEPSEEK_MODEL = 'deepseek-chat'
 
 /** 界面语言到 [TARGETLANGUAGE] 的映射，用于英文系统提示词 */
 const LOCALE_TO_TARGET_LANGUAGE = {
@@ -41,20 +41,20 @@ Respond to the user's message (which follows) entirely in [TARGETLANGUAGE]. Be i
  * @returns {Promise<string>} 完整开示文案（流结束后）
  */
 export async function getOpenReplyStream(question, onChunk, locale) {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+  const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY
   if (!apiKey || !apiKey.trim()) {
     throw new Error('errors.noApiKey')
   }
 
   const systemPrompt = getOpenSystemPrompt(locale)
-  const res = await fetch(OPENROUTER_URL, {
+  const res = await fetch(DEEPSEEK_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: OPENROUTER_MODEL,
+      model: DEEPSEEK_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: question?.trim() || 'No specific question — please offer a brief teaching or blessing.' },
