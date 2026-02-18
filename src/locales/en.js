@@ -64,7 +64,7 @@ export default {
       bgmAriaOff: 'Turn off background music',
     },
     header: {
-      title: 'Wooden Fish · AI Master',
+      title: 'Cyber Temple',
       subtitle: 'One tap, one less worry',
     },
     open: {

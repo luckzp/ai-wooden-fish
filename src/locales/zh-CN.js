@@ -64,7 +64,7 @@ export default {
       bgmAriaOff: '关闭背景音乐',
     },
     header: {
-      title: '敲木鱼 · AI 大师',
+      title: '赛博寺',
       subtitle: '敲一下，烦恼少一点',
     },
     open: {
