@@ -68,10 +68,10 @@ export default {
       subtitle: 'One tap, one less worry',
     },
     open: {
-      entry: 'Ask the Master',
-      modalTitle: 'Ask the Master',
+      entry: 'Master\'s Teaching',
+      modalTitle: 'Master\'s Teaching',
       placeholder: 'What\'s on your mind?',
-      submit: 'Ask',
+      submit: 'Enlighten',
       submitting: 'Asking…',
       replyLabel: 'Master\'s reply',
       close: 'Close',

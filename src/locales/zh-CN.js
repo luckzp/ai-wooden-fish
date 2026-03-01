@@ -68,10 +68,10 @@ export default {
       subtitle: '敲一下，烦恼少一点',
     },
     open: {
-      entry: '求大师开示',
-      modalTitle: '求大师开示',
+      entry: '大师开示',
+      modalTitle: '大师开示',
       placeholder: '有何困惑，但说无妨',
-      submit: '求开示',
+      submit: '开示',
       submitting: '开示中…',
       replyLabel: '大师开示',
       close: '关闭',
