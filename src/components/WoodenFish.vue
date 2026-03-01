@@ -34,7 +34,17 @@ function onTap() {
 
 <template>
   <button type="button" class="wooden-fish" :class="{ tap: isTapping }" aria-label="敲木鱼" @click="onTap">
-    <img :src="fishSvg" class="fish-svg" alt="" aria-hidden="true" />
+    <div class="fish-mallet-wrap">
+      <img :src="fishSvg" class="fish-svg" alt="" aria-hidden="true" />
+      <div class="mallet-wrap" aria-hidden="true">
+        <svg class="mallet-svg" viewBox="0 0 24 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 槌柄 -->
+          <rect x="9" y="28" width="6" height="52" rx="2" fill="#702f00" stroke="#4a2000" stroke-width="1" />
+          <!-- 槌头 -->
+          <ellipse cx="12" cy="22" rx="10" ry="12" fill="#702f00" stroke="#4a2000" stroke-width="1" />
+        </svg>
+      </div>
+    </div>
   </button>
 </template>
 
@@ -58,6 +68,11 @@ function onTap() {
   outline-offset: 2px;
 }
 
+.fish-mallet-wrap {
+  position: relative;
+  display: inline-block;
+}
+
 .fish-svg {
   width: 160px;
   height: auto;
@@ -73,5 +88,33 @@ function onTap() {
 
 .wooden-fish.tap .fish-svg {
   transform: scale(0.92);
+}
+
+/* 木槌：置于木鱼右上方不重叠，默认倾斜；槌柄底为旋转中心，敲击时向左下摆动 */
+.mallet-wrap {
+  position: absolute;
+  top: -15%;
+  right: -42%;
+  width: 48px;
+  height: 100px;
+  max-height: 28vw;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: center bottom;
+  transform: rotate(-24deg);
+  transition: transform 0.12s ease-out;
+  filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.25));
+}
+
+.mallet-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+.wooden-fish.tap .mallet-wrap {
+  transform: rotate(-38deg);
 }
 </style>

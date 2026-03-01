@@ -251,7 +251,7 @@ async function submitOpen() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 0.25rem;
+  margin-top: 2.5rem;
 }
 
 .merit-bubbles {
@@ -284,22 +284,30 @@ async function submitOpen() {
 
 .open-entry {
   order: 3;
-  margin-top: 1.25rem;
-  padding: 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.65);
-  background: none;
+  margin-top: 1.5rem;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #1a1510;
+  background: linear-gradient(135deg, #e8c547 0%, #c9a227 50%, #b8921f 100%);
   border: none;
+  border-radius: 999px;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  transition: color 0.2s;
+  text-decoration: none;
+  box-shadow: 0 3px 12px rgba(201, 162, 39, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
 }
 
 .open-entry:hover {
-  color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(201, 162, 39, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.08);
+}
+
+.open-entry:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.35);
 }
 
 .open-entry:focus {
@@ -307,8 +315,8 @@ async function submitOpen() {
 }
 
 .open-entry:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px;
+  outline: 3px solid rgba(201, 162, 39, 0.7);
+  outline-offset: 3px;
 }
 
 .footer {
@@ -418,16 +426,8 @@ async function submitOpen() {
     outline-offset: 0;
   }
 
-  .open-entry {
-    color: rgba(0, 0, 0, 0.6);
-  }
-
-  .open-entry:hover {
-    color: #1a1a1a;
-  }
-
   .open-entry:focus-visible {
-    outline-color: rgba(0, 0, 0, 0.35);
+    outline-color: rgba(184, 146, 31, 0.8);
   }
 }
 
